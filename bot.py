@@ -31,7 +31,7 @@ def start(message):
                          "• Investigación\n\n"
                          "Comandos útiles:\n"
                          "/clear → Borrar memoria\n"
-                         "/ayuda → Ver todos los comandos"
+                         "/ayuda → Ver todos los comandos\n"
                          "De momento no puedo analizar ni generar imagenes, le falta nivel a mi creador\n\n")
 
 @bot.message_handler(commands=['clear'])
