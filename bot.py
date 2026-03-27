@@ -10,7 +10,6 @@ GROQ_API_KEY = "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"
 
 ALLOWED_USERS = [7699748754, 8165376014]
 
-# Configuración de Groq
 client = OpenAI(
     base_url="https://api.groq.com/openai/v1",
     api_key=GROQ_API_KEY
@@ -24,20 +23,33 @@ def start(message):
     if message.from_user.id not in ALLOWED_USERS:
         bot.reply_to(message, f"🚫 No autorizado.\nTu ID: {message.from_user.id}")
         return
-    bot.reply_to(message, "✅ ¡Bot privado activado con **Groq (Llama 3.3 70B)**!\n\n"
-                         "Puedes enviarme:\n"
-                         "• Texto normal\n"
-                         "• Archivos PDF\n"
-                         "• Archivos Word (.docx)\n\n"
-                         "Usa /clear para borrar la memoria.")
+    bot.reply_to(message, "✅ **¡Hola! Soy tu IA privada para estudiar**\n\n"
+                         "Puedo ayudarte con:\n"
+                         "• Explicaciones claras\n"
+                         "• Resúmenes\n"
+                         "• Análisis de PDFs y Word\n"
+                         "• Investigación\n\n"
+                         "Comandos útiles:\n"
+                         "/clear → Borrar memoria\n"
+                         "/ayuda → Ver todos los comandos")
 
 @bot.message_handler(commands=['clear'])
 def clear(message):
     if message.from_user.id in ALLOWED_USERS:
         user_memory.pop(message.from_user.id, None)
-        bot.reply_to(message, "🧹 Memoria borrada.")
+        bot.reply_to(message, "🧹 Memoria borrada correctamente.")
 
-# ================== MENSAJES DE TEXTO ==================
+@bot.message_handler(commands=['ayuda'])
+def ayuda(message):
+    if message.from_user.id not in ALLOWED_USERS:
+        return
+    bot.reply_to(message, "📋 **Comandos disponibles:**\n\n"
+                         "/start - Iniciar el bot\n"
+                         "/clear - Borrar memoria de conversación\n"
+                         "/ayuda - Mostrar esta ayuda\n\n"
+                         "Solo envíame texto, PDF o archivos Word y te ayudo.")
+
+# ================== TEXTO ==================
 @bot.message_handler(content_types=['text'])
 def handle_text(message):
     if message.from_user.id not in ALLOWED_USERS:
@@ -48,13 +60,13 @@ def handle_text(message):
         user_memory[user_id] = []
     
     user_memory[user_id].append({"role": "user", "content": message.text})
-    if len(user_memory[user_id]) > 25:
-        user_memory[user_id] = user_memory[user_id][-25:]
+    if len(user_memory[user_id]) > 28:
+        user_memory[user_id] = user_memory[user_id][-28:]
 
     try:
         response = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",   # Modelo potente y rápido
-            messages=[{"role": "system", "content": "Eres un tutor universitario experto, claro, motivador y preciso. Siempre responde en español de forma útil para estudiantes."}] + user_memory[user_id],
+            model="llama-3.3-70b-versatile",
+            messages=[{"role": "system", "content": "Eres un excelente tutor universitario. Responde siempre en español, de forma clara, motivadora y útil para estudiantes."}] + user_memory[user_id],
             temperature=0.7,
             max_tokens=2048
         )
@@ -62,9 +74,9 @@ def handle_text(message):
         user_memory[user_id].append({"role": "assistant", "content": reply})
         bot.reply_to(message, reply)
     except Exception as e:
-        bot.reply_to(message, f"❌ Error con Groq: {str(e)[:180]}")
+        bot.reply_to(message, f"❌ Error: {str(e)[:150]}")
 
-# ================== DOCUMENTOS (PDF y Word) ==================
+# ================== DOCUMENTOS ==================
 @bot.message_handler(content_types=['document'])
 def handle_document(message):
     if message.from_user.id not in ALLOWED_USERS:
@@ -77,7 +89,7 @@ def handle_document(message):
     with open(file_name, 'wb') as f:
         f.write(downloaded)
 
-    bot.reply_to(message, "📄 Analizando documento... espera un momento.")
+    bot.reply_to(message, "📄 Analizando documento... dame un momento.")
 
     try:
         text = ""
@@ -89,33 +101,33 @@ def handle_document(message):
             text = "\n".join([p.text for p in doc.paragraphs if p.text.strip()])
 
         if text.strip():
-            prompt = f"""Analiza este documento académico detalladamente:
+            prompt = f"""Analiza este documento académico con cuidado:
 
-{text[:100000]}
+{text[:110000]}
 
-Responde con este formato:
-- **Resumen claro y conciso**
-- **Puntos clave más importantes**
-- **Conceptos fundamentales**
-- **Sugerencias para estudiar o preparar exámenes**"""
+Devuélveme en español:
+- **Resumen claro**
+- **Puntos clave**
+- **Conceptos importantes**
+- **Sugerencias para estudiar**"""
 
             response = client.chat.completions.create(
                 model="llama-3.3-70b-versatile",
                 messages=[
-                    {"role": "system", "content": "Eres un tutor experto en analizar documentos académicos."},
+                    {"role": "system", "content": "Eres un tutor experto analizando documentos académicos."},
                     {"role": "user", "content": prompt}
                 ],
-                temperature=0.6,
+                temperature=0.65,
                 max_tokens=2048
             )
             bot.reply_to(message, response.choices[0].message.content)
         else:
             bot.reply_to(message, "❌ No pude extraer texto del archivo.")
     except Exception as e:
-        bot.reply_to(message, f"❌ Error procesando archivo: {str(e)[:180]}")
+        bot.reply_to(message, f"❌ Error al procesar el archivo: {str(e)[:150]}")
     finally:
         if os.path.exists(file_name):
             os.remove(file_name)
 
-print("🤖 Bot con Groq (Llama 3.3 70B) iniciado correctamente")
+print("🤖 Bot con Groq iniciado correctamente - Versión mejorada")
 bot.infinity_polling()
