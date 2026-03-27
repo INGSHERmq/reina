@@ -23,7 +23,7 @@ def start(message):
     if message.from_user.id not in ALLOWED_USERS:
         bot.reply_to(message, f"🚫 No autorizado.\nTu ID: {message.from_user.id}")
         return
-    bot.reply_to(message, "✅ **¡Hola! Soy tu IA privada para estudiar**\n\n"
+    bot.reply_to(message, "✅ **¡Hola! Soy tu IA privada para estudiar, fui creado por Sherry y**\n\n"
                          "Puedo ayudarte con:\n"
                          "• Explicaciones claras\n"
                          "• Resúmenes\n"
@@ -31,7 +31,8 @@ def start(message):
                          "• Investigación\n\n"
                          "Comandos útiles:\n"
                          "/clear → Borrar memoria\n"
-                         "/ayuda → Ver todos los comandos")
+                         "/ayuda → Ver todos los comandos"
+                         "De momento no puedo analizar ni generar imagenes, le falta nivel a mi creador\n\n")
 
 @bot.message_handler(commands=['clear'])
 def clear(message):
