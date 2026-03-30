@@ -3,12 +3,20 @@ import os
 from openai import OpenAI
 from docx import Document
 import pymupdf
+import sys
 
-# ================== CONFIG (IMPORTANTE PARA RAILWAY) ==================
+# ================== CONFIG PARA RENDER ==================
 TOKEN = os.getenv("TOKEN")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
-# IDs de los usuarios autorizados
+# Verificación de variables (importante en Render)
+if not TOKEN:
+    print("❌ ERROR: La variable TOKEN no está configurada en Render")
+    sys.exit(1)
+if not GROQ_API_KEY:
+    print("❌ ERROR: La variable GROQ_API_KEY no está configurada en Render")
+    sys.exit(1)
+
 ALLOWED_USERS = [7699748754, 8165376014]
 
 client = OpenAI(
@@ -18,6 +26,8 @@ client = OpenAI(
 
 bot = telebot.TeleBot(TOKEN)
 user_memory = {}
+
+print("🤖 Bot iniciado correctamente en Render.com")
 
 @bot.message_handler(commands=['start'])
 def start(message):
@@ -62,8 +72,8 @@ def handle_text(message):
         user_memory[user_id] = []
    
     user_memory[user_id].append({"role": "user", "content": message.text})
-    if len(user_memory[user_id]) > 28:
-        user_memory[user_id] = user_memory[user_id][-28:]
+    if len(user_memory[user_id]) > 25:        # Reducido un poco
+        user_memory[user_id] = user_memory[user_id][-25:]
 
     try:
         response = client.chat.completions.create(
@@ -76,7 +86,7 @@ def handle_text(message):
         user_memory[user_id].append({"role": "assistant", "content": reply})
         bot.reply_to(message, reply)
     except Exception as e:
-        bot.reply_to(message, f"❌ Error: {str(e)[:150]}")
+        bot.reply_to(message, f"❌ Error: {str(e)[:140]}")
 
 # ================== DOCUMENTOS ==================
 @bot.message_handler(content_types=['document'])
@@ -105,7 +115,7 @@ def handle_document(message):
         if text.strip():
             prompt = f"""Analiza este documento académico con cuidado:
 
-{text[:110000]}
+{text[:100000]}
 
 Devuélveme en español:
 - **Resumen claro**
@@ -126,10 +136,12 @@ Devuélveme en español:
         else:
             bot.reply_to(message, "❌ No pude extraer texto del archivo.")
     except Exception as e:
-        bot.reply_to(message, f"❌ Error al procesar el archivo: {str(e)[:150]}")
+        bot.reply_to(message, f"❌ Error al procesar el archivo: {str(e)[:140]}")
     finally:
         if os.path.exists(file_name):
             os.remove(file_name)
 
-print("🤖 Bot con Groq iniciado correctamente en Railway")
-bot.infinity_polling()
+# ================== INICIO DEL BOT ==================
+if __name__ == "__main__":
+    print("🚀 Iniciando bot en Render...")
+    bot.infinity_polling(none_stop=True, interval=0, timeout=20)
